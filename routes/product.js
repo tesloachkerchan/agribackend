@@ -44,17 +44,37 @@ router.get('/:farmerId', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+//get single product 
+router.get('/singleProduct/:productId', async (req, res) => {
+  try {
+    const productId = req.params.productId; // Get the product ID from the route parameters
+
+    // Fetch the product by its ID
+    const product = await Product.findOne({ _id: productId });
+
+    // Check if the product was found
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // If the product was found, return it in the response
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // Add Product Route
-router.post('/', async (req, res) => {
+router.post('/:farmerId', async (req, res) => {
     try {
+        const farmerId = req.params.farmerId;
         // Create a new product
         const product = new Product({
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
             availableQuantity: req.body.availableQuantity,
-            farmerId: req.body.farmerId // Assuming authenticated farmer's ID is stored in req.user._id
+            farmerId: farmerId // Assuming authenticated farmer's ID is stored in req.user._id
         });
 
         // Save the product

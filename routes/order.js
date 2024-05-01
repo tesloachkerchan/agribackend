@@ -16,6 +16,22 @@ router.get('/farmer/:farmerId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+router.get('/singleOrder/:orderId', async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+        const order = await Order.findOne({ _id: orderId });
+
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        res.status(200).json(order);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 // Route for getting orders by buyer ID
 router.get('/buyer/:buyerId', async (req, res) => {
