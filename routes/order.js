@@ -9,13 +9,46 @@ const Farmer = require('../models/farmerModel');
 router.get('/farmer/:farmerId', async (req, res) => {
     try {
         const farmerId = req.params.farmerId;
-        const orders = await Order.find({ 'products.farmerId': farmerId })
-        res.status(200).json({ orders });
+        const orders = await Order.find({ 'products.farmerId': farmerId }).sort({ createdAt: -1 });
+        res.status(200).json({orders});
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Route for getting total orders by farmer ID
+router.get('/total/farmer/:farmerId', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId;
+        const orders = await Order.find({ 'products.farmerId': farmerId })
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Route for getting total money earned by a farmer
+router.get('/earnings/farmer/:farmerId', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId;
+
+        // Find all orders associated with the farmer ID
+        const orders = await Order.find({ 'products.farmerId': farmerId });
+
+        // Calculate total earnings
+        let totalEarnings = 0;
+        orders.forEach(order => {
+            totalEarnings += order.overallTotal;
+        });
+        console.log(totalEarnings)
+
+        res.status(200).json(totalEarnings);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 router.get('/singleOrder/:orderId', async (req, res) => {
     try {
         const orderId = req.params.orderId;

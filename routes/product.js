@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const products = await Product.find(query);
+    const products = await Product.find(query).sort({ createdAt: -1 });
 
     res.json(products);
   } catch (error) {
@@ -37,7 +37,7 @@ router.get('/:farmerId', async (req, res) => {
     const farmerId = req.params.farmerId; // Get the farmer ID from the route parameters
 
     // Fetch products associated with the specified farmer
-    const products = await Product.find({ farmerId });
+    const products = await Product.find({ farmerId }).sort({ createdAt: -1 });
 
     res.json(products);
   } catch (error) {
@@ -81,7 +81,7 @@ router.post('/:farmerId', async (req, res) => {
         const savedProduct = await product.save();
 
         // Update farmer's products array
-        await Farmer.findByIdAndUpdate(req.body.farmerId, { $push: { products: savedProduct._id } });
+        await Farmer.findByIdAndUpdate(req.params.farmerId, { $push: { products: savedProduct._id } });
 
         res.status(201).json(savedProduct);
     } catch (error) {
