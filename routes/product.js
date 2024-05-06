@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
+const multer = require('multer');const fs = require('fs');
+const path = require('path')
 const Product = require('../models/productModel');
 const Farmer = require('../models/farmerModel');
+const upload = multer({ dest: 'uploads/' });
 
 
 // Get all products with filtering and search
@@ -65,16 +69,40 @@ router.get('/singleProduct/:productId', async (req, res) => {
 });
 
 // Add Product Route
-router.post('/:farmerId', async (req, res) => {
+// Add Product Route
+router.post('/:farmerId', upload.single('image'), async function (req, res, next) {
     try {
         const farmerId = req.params.farmerId;
+
+        // Check if file was uploaded successfully
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        // Upload image to imgBB
+        const fileData = fs.readFileSync(req.file.path);
+        const base64Data = fileData.toString('base64');
+
+        const formData = new FormData();
+        formData.append('image', base64Data);
+        const IMGKEY = process.env.IMG_KEY;
+
+        const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+            params: {
+                key: IMGKEY,
+            },
+        });
+
+        const imageUrl = response.data.data.url;
+
         // Create a new product
         const product = new Product({
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
             availableQuantity: req.body.availableQuantity,
-            farmerId: farmerId // Assuming authenticated farmer's ID is stored in req.user._id
+            image: imageUrl,
+            farmerId: farmerId,
         });
 
         // Save the product
@@ -85,9 +113,13 @@ router.post('/:farmerId', async (req, res) => {
 
         res.status(201).json(savedProduct);
     } catch (error) {
+        // Handle errors
         res.status(500).json({ message: error.message });
+        console.log(error.message);
     }
 });
+
+
 
 // Update Product Route
 router.put('/:id', async (req, res) => {

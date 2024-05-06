@@ -40,7 +40,7 @@ router.get('/earnings/farmer/:farmerId', async (req, res) => {
         orders.forEach(order => {
             totalEarnings += order.overallTotal;
         });
-        console.log(totalEarnings)
+
 
         res.status(200).json(totalEarnings);
     } catch (error) {
