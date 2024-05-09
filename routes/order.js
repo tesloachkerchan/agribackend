@@ -4,6 +4,7 @@ const router = express.Router();
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const Farmer = require('../models/farmerModel');
+const Company = require('../models/transportationModel')
 
 // Route for getting orders by farmer ID
 router.get('/farmer/:farmerId', async (req, res) => {
@@ -156,10 +157,12 @@ router.post('/', async (req, res) => {
     }
 });
 // Route to update order status
-router.put('/status/:orderId/:farmerId', async (req, res) => {
+router.put('/status/:orderId/:farmerId/:companyId', async (req, res) => {
     const orderId = req.params.orderId;
     const farmerId = req.params.farmerId;
+    const companyId = req.params.companyId;
     const newStatus = req.body.status;
+    const estimatedDeliveryDate = req.body.shippingDate;
 
     try {
         // Find the order by ID
@@ -175,9 +178,27 @@ router.put('/status/:orderId/:farmerId', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: This order does not belong to you' });
         }
 
-        // Update the order status
+        // Update the order status, company ID, and estimated delivery date
         order.orderStatus = newStatus;
+        order.transportationCompanyId = companyId;
+
+        // Check if transportationDetails is initialized
+        if (!order.transportationDetails) {
+            order.transportationDetails = {};
+        }
+
+        // Update the estimatedDeliveryDate
+        order.transportationDetails.estimatedDeliveryDate = estimatedDeliveryDate;
+
         await order.save();
+
+        // Push the order ID to the transportation company's orders array
+        const transportationCompany = await Company.findById(companyId);
+        if (!transportationCompany) {
+            return res.status(404).json({ error: 'Transportation company not found' });
+        }
+        transportationCompany.orders.push(orderId);
+        await transportationCompany.save();
 
         res.json({ message: 'Order status updated successfully', order });
     } catch (error) {
@@ -185,6 +206,86 @@ router.put('/status/:orderId/:farmerId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Route to update order status by transportation company
+router.put('/status/transportation/:orderId', async (req, res) => {
+    const orderId = req.params.orderId;
+    const ShippingDate = req.body.shippingDate;
+    const newStatus = 'shipping'; // Set the status to "shipping" for transportation company
+
+    try {
+        // Find the order by ID
+        const order = await Order.findById(orderId);
+
+        // Check if the order exists
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Update the order status to "shipping"
+        order.orderStatus = newStatus;
+        // Check if transportationDetails is initialized
+        if (!order.transportationDetails) {
+            order.transportationDetails = {};
+        }
+
+        // Update the estimatedDeliveryDate
+        order.transportationDetails.shippingDate = ShippingDate;
+
+        // Save the order
+        await order.save();
+
+        res.json({ message: 'Order status updated to shipping successfully', order });
+    } catch (error) {
+        console.error('Error updating order status to shipping:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Route to update order status by farmer (to "delivered")
+router.put('/delivery/:orderId/:farmerId', async (req, res) => {
+    const orderId = req.params.orderId;
+    const farmerId = req.params.farmerId;
+    const newStatus = 'delivered'; // Set the status to "delivered" for farmer
+
+    try {
+        // Find the order by ID
+        const order = await Order.findById(orderId);
+
+        // Check if the order exists
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Check if the order belongs to the logged-in farmer
+        if (order.products.some(product => product.farmerId.toString() !== farmerId.toString())) {
+            return res.status(403).json({ error: 'Unauthorized: This order does not belong to you' });
+        }
+
+        // Check if the order status is "shipping"
+        if (order.orderStatus !== 'shipping') {
+            return res.status(400).json({ error: 'Invalid operation: Order status must be "shipping" to update to "delivered"' });
+        }
+
+        // Update the order status to "delivered"
+        order.orderStatus = newStatus;
+
+        // Update the delivery date to the current date
+        order.transportationDetails.DeliveryDate = new Date();
+
+        // Save the order
+        await order.save();
+
+        res.json({ message: 'Order status updated to delivered successfully', order });
+    } catch (error) {
+        console.error('Error updating order status to delivered:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
+
+
 
 // Export the router
 module.exports = router;

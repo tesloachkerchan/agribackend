@@ -36,13 +36,13 @@ const orderSchema = new mongoose.Schema({
     },
     orderStatus: {
         type: String,
-        enum: ['pending', 'shipping', 'delivered'],
+        enum: ['pending','processing', 'shipping', 'delivered'],
         default: 'pending'
     },
     transportationDetails: {
         estimatedDeliveryDate: Date,
-        actualDeliveryDate: Date,
-        trackingNumber: String
+        shippingDate: Date,
+        DeliveryDate: Date,
     }
 },
 { timestamps: true }
