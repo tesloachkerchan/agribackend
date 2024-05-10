@@ -17,6 +17,9 @@ const orderSchema = new mongoose.Schema({
             ref: 'Farmer',
             required: true
         },
+        farmerName: {
+            type: String
+        },
         quantity: {
             type: Number,
             required: true
@@ -24,8 +27,22 @@ const orderSchema = new mongoose.Schema({
         totalPrice: {
             type: Number,
             required: true
-        }
+        },
+        productName: {
+            type: String
+        },
+        ProductPrice:{
+            type:Number
+        },
     }],
+    buyerContactDetails: {
+        phone: String,
+        address: String
+    },
+    farmerContactDetails: {
+        phone: String,
+        address: String
+    },
     overallTotal: {
         type: Number, // Add overall total field to the schema
         required: true

@@ -4,6 +4,7 @@ const router = express.Router();
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const Farmer = require('../models/farmerModel');
+const Buyer = require('../models/buyerModel')
 const Company = require('../models/transportationModel')
 
 // Route for getting orders by farmer ID
@@ -43,7 +44,7 @@ router.get('/earnings/farmer/:farmerId', async (req, res) => {
         });
 
 
-        res.status(200).json(totalEarnings);
+        res.status(200).json(totalEarnings.toFixed(2));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -98,6 +99,9 @@ router.post('/', async (req, res) => {
     try {
         // Extract data from the request body
         const { buyerId, products } = req.body;
+        //find buyer info
+        const buyer = await Buyer.findById(buyerId)
+        let farmer;
 
         // Create an array to hold product details
         const productsWithDetails = [];
@@ -114,14 +118,21 @@ router.post('/', async (req, res) => {
             // Calculate total price for the product
             const totalPrice = quantity * product.price;
             overallTotal += totalPrice;
+            //find farmer info
+            farmer = await Farmer.findById(product.farmerId)
 
-            // Push product details to the array
+
+            //Push product details to the array
             productsWithDetails.push({
+                productName:product.name,
                 productId,
+                ProductPrice:product.price,
                 quantity,
                 totalPrice,
-                farmerId: product.farmerId // Extracting farmerId from the product
+                farmerId: product.farmerId ,// Extracting farmerId from the product
+                farmerName: farmer.name,
             });
+    
 
             // Update product quantities
             await Product.findByIdAndUpdate(productId, {
@@ -131,13 +142,18 @@ router.post('/', async (req, res) => {
 
         // Get the farmer ID from the first product (assuming all products belong to the same farmer)
         const farmerId = productsWithDetails[0].farmerId;
+        const farmerName = productsWithDetails[0].farmerName;
+        const farmerContact = farmer.contactDetails;
 
         // Create a new order with overall total and farmerId
         const order = new Order({
             buyerId,
             products: productsWithDetails,
             overallTotal,
-            farmerId
+            farmerId,
+            buyerContactDetails: buyer.contactDetails,
+            farmerName,
+            farmerContactDetails:farmerContact
         });
 
         // Save the order to the database
