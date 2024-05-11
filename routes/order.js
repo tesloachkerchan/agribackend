@@ -1,5 +1,6 @@
 // Import necessary modules
 const express = require('express');
+const mongoose = require('mongoose')
 const router = express.Router();
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
@@ -13,6 +14,52 @@ router.get('/farmer/:farmerId', async (req, res) => {
         const farmerId = req.params.farmerId;
         const orders = await Order.find({ 'products.farmerId': farmerId }).sort({ createdAt: -1 });
         res.status(200).json({orders});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Route for getting order counts by farmer ID
+router.get('/farmer/:farmerId/order-counts', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId;
+
+        // Aggregate pipeline to calculate counts
+        const pipeline = [
+            { 
+                $match: {
+                    'products.farmerId': new mongoose.Types.ObjectId(farmerId)
+                }
+            },
+            { 
+                $group: { 
+                    _id: '$orderStatus', 
+                    count: { $sum: 1 } 
+                } 
+            }
+        ];
+
+        const counts = await Order.aggregate(pipeline);
+
+        let pendingCount = 0;
+        let shippingCount = 0;
+        let deliveredCount = 0;
+        let processingCount = 0;
+
+        // Extract counts from aggregation result
+        counts.forEach(statusCount => {
+            if (statusCount._id === 'pending') {
+                pendingCount = statusCount.count;
+            } else if (statusCount._id === 'shipping') {
+                shippingCount = statusCount.count;
+            } else if (statusCount._id === 'delivered') {
+                deliveredCount = statusCount.count;
+            } else if (statusCount._id === 'processing') {
+                processingCount = statusCount.count;
+            }
+        });
+
+        res.status(200).json({ pendingCount, shippingCount, deliveredCount, processingCount });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -72,7 +119,7 @@ router.get('/singleOrder/:orderId', async (req, res) => {
 router.get('/buyer/:buyerId', async (req, res) => {
     try {
         const buyerId = req.params.buyerId;
-        const orders = await Order.find({ buyerId }).populate('products.productId').populate('transportationCompanyId');
+        const orders = await Order.find({ buyerId }).populate('products.productId').populate('transportationCompanyId').sort({ createdAt: -1 });
         res.status(200).json({ orders });
     } catch (error) {
         console.error(error);
@@ -84,7 +131,7 @@ router.get('/buyer/:buyerId', async (req, res) => {
 router.get('/transportation/:transportationId', async (req, res) => {
     try {
         const transportationId = req.params.transportationId;
-        const orders = await Order.find({ transportationCompanyId: transportationId });
+        const orders = await Order.find({ transportationCompanyId: transportationId }).sort({ createdAt: -1 });
         res.status(200).json({ orders });
     } catch (error) {
         console.error(error);
