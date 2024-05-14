@@ -73,6 +73,8 @@ router.get('/singleProduct/:productId', async (req, res) => {
 router.post('/:farmerId', upload.single('image'), async function (req, res, next) {
     try {
         const farmerId = req.params.farmerId;
+        const farmer = await Farmer.findOne({ _id: farmerId })
+        const farmerName = farmer.name;
 
         // Check if file was uploaded successfully
         if (!req.file) {
@@ -103,10 +105,12 @@ router.post('/:farmerId', upload.single('image'), async function (req, res, next
             availableQuantity: req.body.availableQuantity,
             image: imageUrl,
             farmerId: farmerId,
+            productOwner: farmerName
         });
 
         // Save the product
         const savedProduct = await product.save();
+        console.log(savedProduct)
 
         // Update farmer's products array
         await Farmer.findByIdAndUpdate(req.params.farmerId, { $push: { products: savedProduct._id } });

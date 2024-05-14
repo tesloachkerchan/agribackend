@@ -21,6 +21,9 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    productOwner: {
+        type: String,
+    },
     farmerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Farmer',
