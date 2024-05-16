@@ -23,6 +23,10 @@ router.get('/', async (req, res) => {
 router.get('/farmer/:farmerId', async (req, res) => {
     try {
         const farmerId = req.params.farmerId;
+        const farmer = await Farmer.findOne({ _id: farmerId, status: 'active' });
+        if (!farmer) {
+            return res.status(403).json({ message: 'You are not authorized to access your order. Please contact the admin to activate your account.' });
+        }
         const orders = await Order.find({ 'products.farmerId': farmerId }).sort({ createdAt: -1 });
         res.status(200).json({orders});
     } catch (error) {
@@ -172,6 +176,10 @@ router.get('/buyer/:buyerId', async (req, res) => {
 router.get('/transportation/:transportationId', async (req, res) => {
     try {
         const transportationId = req.params.transportationId;
+        const transportation = await Company.findOne({ _id: transportationId, status: 'active' });
+        if (!transportation) {
+            return res.status(403).json({ message: 'You are not authorized to access orders. Please contact the admin to activate your account.' });
+        }
         const orders = await Order.find({ transportationCompanyId: transportationId }).sort({ createdAt: -1 });
         res.status(200).json({ orders });
     } catch (error) {

@@ -28,6 +28,11 @@ const buyerSchema = new mongoose.Schema({
     contactDetails: {
         phone: String,
         address: String
+    },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active"
     }
 },
     { timestamps: true }

@@ -73,7 +73,10 @@ router.get('/singleProduct/:productId', async (req, res) => {
 router.post('/:farmerId', upload.single('image'), async function (req, res, next) {
     try {
         const farmerId = req.params.farmerId;
-        const farmer = await Farmer.findOne({ _id: farmerId })
+        const farmer = await Farmer.findOne({ _id: farmerId, status: 'active' });
+        if (!farmer) {
+            return res.status(403).json({ message: 'You are not authorized to add products. Please contact the admin to activate your account.' });
+        }
         const farmerName = farmer.name;
 
         // Check if file was uploaded successfully
@@ -157,6 +160,10 @@ router.delete('/:farmerId/:productId', async (req, res) => {
     try {
         const productId = req.params.productId;
         const farmerId = req.params.farmerId;
+        const farmer = await Farmer.findOne({ _id: farmerId, status: 'active' });
+        if (!farmer) {
+            return res.status(403).json({ message: 'You are not authorized to delete products. Please contact the admin to activate your account.' });
+        }
 
         // Delete the product
         await Product.findByIdAndDelete(productId);

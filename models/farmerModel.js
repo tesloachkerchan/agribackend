@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const farmerSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -17,16 +18,15 @@ const farmerSchema = new mongoose.Schema({
         required: true
     },
     role: {
-            type: String,
-            required: [true],
-            default: "farmer",
-            enum: ["buyer","farmer", "admin"],
-        },
+        type: String,
+        required: [true],
+        default: "farmer"
+    },
     photo: {
-            type: String,
-            required: [true, "Please add a photo"],
-            default: "https://i.ibb.co/4pDNDk1/avatar.png",
-        },
+        type: String,
+        required: [true, "Please add a photo"],
+        default: "https://i.ibb.co/4pDNDk1/avatar.png",
+    },
     contactDetails: {
         phone: String,
         address: String
@@ -41,10 +41,14 @@ const farmerSchema = new mongoose.Schema({
     orders: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'
-    }]
-},
-    { timestamps: true }
-);
+    }],
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "inactive"
+    }
+}, { timestamps: true });
 
 const Farmer = mongoose.model('Farmer', farmerSchema);
+
 module.exports = Farmer;

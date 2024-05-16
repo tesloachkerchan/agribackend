@@ -34,7 +34,12 @@ const transportationCompanySchema = new mongoose.Schema({
     orders: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'
-    }]
+    }],
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active"
+    }
 },
     { timestamps: true }
 );
