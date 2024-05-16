@@ -8,6 +8,7 @@ const productRoute = require('./routes/product')
 const orderRoute = require('./routes/order')
 const reviewRoute = require('./routes/review')
 const companyRoute = require('./routes/company')
+const userRoute = require('./routes/user')
 
  dotenv.config();
  const app = express();
@@ -21,7 +22,8 @@ app.use('/api/v1/auth',AuthRoute)
 app.use('/api/v1/products', productRoute);
 app.use('/api/v1/order', orderRoute);
 app.use('/api/v1/review', reviewRoute);
-app.use('/api/v1/company',companyRoute)
+app.use('/api/v1/company', companyRoute)
+app.use('/api/v1/user',userRoute)
 
 // database connection
 mongoose

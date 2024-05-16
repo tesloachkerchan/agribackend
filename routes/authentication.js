@@ -2,11 +2,34 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Farmer = require('./../models/farmerModel'); // Assuming you have a Farmer model defined
+const Farmer = require('../models/farmerModel'); // Assuming you have a Farmer model defined
 const Buyer = require('../models/buyerModel'); // Import Buyer model
 const TransportationCompany = require('../models/transportationModel'); 
-
+const Admin = require('../models/adminModel')
 const router = express.Router();
+
+router.post('/admin/register', async (req, res) => {
+  try {
+    const { role, name, email, password, confirmPassword, ...otherFields } = req.body;
+
+    // Check if password matches confirm password
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user = await Admin.findOne({ email });
+    if (user) {
+          return res.status(400).json({ message: 'Admin already exists' });
+    }
+    user = await Admin.create({ name, email, password: hashedPassword, ...otherFields });
+    res.status(201).json({ message: 'User created successfully', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 router.post('/register', async (req, res) => {
   try {
@@ -73,7 +96,10 @@ router.post('/login', async (req, res) => {
         // Check in TransportationCompany collection
         user = await TransportationCompany.findOne({ email });
         if (!user) {
+           user = await Admin.findOne({ email });
+          if (!user) {
           return res.status(404).json({ message: 'User not found' });
+        }
         }
       }
       }

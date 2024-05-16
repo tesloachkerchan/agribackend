@@ -8,6 +8,17 @@ const Farmer = require('../models/farmerModel');
 const Buyer = require('../models/buyerModel')
 const Company = require('../models/transportationModel')
 
+// Route for getting all orders
+router.get('/', async (req, res) => {
+    try {
+        
+        const orders = await Order.find().sort({ createdAt: -1 });
+        res.status(200).json({orders});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Route for getting orders by farmer ID
 router.get('/farmer/:farmerId', async (req, res) => {
     try {
@@ -65,12 +76,42 @@ router.get('/farmer/:farmerId/order-counts', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Route for getting total orders
+router.get('/total', async (req, res) => {
+    try {
+        const orders = await Order.find()
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Route for getting total orders by farmer ID
 router.get('/total/farmer/:farmerId', async (req, res) => {
     try {
         const farmerId = req.params.farmerId;
         const orders = await Order.find({ 'products.farmerId': farmerId })
         res.status(200).json(orders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Route for getting total money earned
+router.get('/earnings', async (req, res) => {
+    try {
+
+        // Find all orders 
+        const orders = await Order.find();
+
+        // Calculate total earnings
+        let totalEarnings = 0;
+        orders.forEach(order => {
+            totalEarnings += order.overallTotal;
+        });
+
+
+        res.status(200).json(totalEarnings.toFixed(2));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
