@@ -18,8 +18,14 @@ const transportationCompanySchema = new mongoose.Schema({
         required: true
     },
     contactDetails: {
-        phone: String,
-        address: String
+        phone: {
+            type: String,
+            default: "N/A"
+        },
+        address: {
+            type: String,
+            default: "N/A"
+        }
     },
     role: {
         type: String,
@@ -31,6 +37,9 @@ const transportationCompanySchema = new mongoose.Schema({
             required: [true, "Please add a photo"],
             default: "https://i.ibb.co/4pDNDk1/avatar.png",
         },
+    license: {
+        type: String,
+    },
     orders: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order'

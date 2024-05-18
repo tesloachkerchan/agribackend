@@ -1,5 +1,9 @@
 // Import necessary modules
 const express = require('express');
+const axios = require('axios')
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Farmer = require('../models/farmerModel'); // Assuming you have a Farmer model defined
@@ -7,6 +11,7 @@ const Buyer = require('../models/buyerModel'); // Import Buyer model
 const TransportationCompany = require('../models/transportationModel'); 
 const Admin = require('../models/adminModel')
 const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
 
 router.post('/admin/register', async (req, res) => {
   try {
@@ -31,7 +36,8 @@ router.post('/admin/register', async (req, res) => {
   }
 });
 
-router.post('/register', async (req, res) => {
+
+router.post('/register', upload.single('license'), async (req, res) => {
   try {
     const { role, name, email, password, confirmPassword, ...otherFields } = req.body;
 
@@ -43,6 +49,27 @@ router.post('/register', async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Check if file was uploaded successfully
+    if (!req.file) {
+      return res.status(400).json({ message: 'No license file uploaded' });
+    }
+
+    // Upload license image to imgbb
+        const fileData = fs.readFileSync(req.file.path);
+        const base64Data = fileData.toString('base64');
+
+        const formData = new FormData();
+        formData.append('image', base64Data);
+        const IMGKEY = process.env.IMG_KEY;
+
+    const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+      params: {
+        key: IMGKEY,
+      },
+    });
+
+    const licenseUrl = response.data.data.url;
+
     let user;
     switch (role) {
       case 'buyer':
@@ -51,7 +78,7 @@ router.post('/register', async (req, res) => {
           return res.status(400).json({ message: 'Buyer already exists' });
         }
         // Additional checks or validations specific to buyer registration can be added here
-        user = await Buyer.create({ name, email, password: hashedPassword, ...otherFields });
+        user = await Buyer.create({ name, email, password: hashedPassword, phone, address, ...otherFields });
         break;
       case 'farmer':
         user = await Farmer.findOne({ email });
@@ -59,7 +86,7 @@ router.post('/register', async (req, res) => {
           return res.status(400).json({ message: 'Farmer already exists' });
         }
         // Additional checks or validations specific to farmer registration can be added here
-        user = await Farmer.create({ name, email, password: hashedPassword, ...otherFields });
+        user = await Farmer.create({ name, email, password: hashedPassword, license: licenseUrl, ...otherFields });
         break;
       case 'transportation':
         user = await TransportationCompany.findOne({ email });
@@ -67,7 +94,7 @@ router.post('/register', async (req, res) => {
           return res.status(400).json({ message: 'Transportation Company already exists' });
         }
         // Additional checks or validations specific to transportation company registration can be added here
-        user = await TransportationCompany.create({ name, email, password: hashedPassword, ...otherFields });
+        user = await TransportationCompany.create({ name, email, password: hashedPassword,license: licenseUrl, ...otherFields });
         break;
       default:
         return res.status(400).json({ message: 'Invalid role' });
@@ -77,8 +104,11 @@ router.post('/register', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  } finally {
+    fs.unlinkSync(req.file.path); // Clean up the uploaded file
   }
 });
+
 
 
 
