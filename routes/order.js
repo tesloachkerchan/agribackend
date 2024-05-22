@@ -394,10 +394,5 @@ router.put('/delivery/:orderId/:farmerId', async (req, res) => {
     }
 });
 
-
-
-
-
-
 // Export the router
 module.exports = router;

@@ -118,5 +118,22 @@ router.put('/company/:companyId/status', async (req, res) => {
     }
 });
 
+// Get total counts for farmers, buyers, and companies
+router.get('/totals', async (req, res) => {
+    try {
+        const farmersCount = await Farmer.countDocuments();
+        const buyersCount = await Buyer.countDocuments();
+        const companiesCount = await Company.countDocuments();
+
+        res.status(200).json({
+            farmersCount,
+            buyersCount,
+            companiesCount
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 module.exports = router;
