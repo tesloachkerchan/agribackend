@@ -35,6 +35,28 @@ router.post('/admin/register', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+router.post('/buyer/register', async (req, res) => {
+  try {
+    const { role, name, email, password, confirmPassword, ...otherFields } = req.body;
+
+    // Check if password matches confirm password
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user = await Buyer.findOne({ email });
+    if (user) {
+          return res.status(400).json({ message: 'Admin already exists' });
+    }
+    user = await Buyer.create({ name, email, password: hashedPassword, ...otherFields });
+    res.status(201).json({ message: 'User created successfully', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 
 router.post('/register', upload.single('license'), async (req, res) => {
@@ -72,14 +94,6 @@ router.post('/register', upload.single('license'), async (req, res) => {
 
     let user;
     switch (role) {
-      case 'buyer':
-        user = await Buyer.findOne({ email });
-        if (user) {
-          return res.status(400).json({ message: 'Buyer already exists' });
-        }
-        // Additional checks or validations specific to buyer registration can be added here
-        user = await Buyer.create({ name, email, password: hashedPassword, phone, address, ...otherFields });
-        break;
       case 'farmer':
         user = await Farmer.findOne({ email });
         if (user) {
