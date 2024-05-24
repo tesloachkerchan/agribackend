@@ -19,12 +19,28 @@ router.get('/farmer/:farmerId', async (req, res) => {
     try {
         const farmerId = req.params.farmerId
         const farmer = await Farmer.find({ _id: farmerId })
-        res.json(farmer);
+        res.json({farmer});
+        
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+// Update farmer
+router.put('/farmer/:farmerId', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId;
+        const updatedFarmer = await Farmer.findByIdAndUpdate(farmerId, req.body, { new: true });
+        if (!updatedFarmer) {
+            return res.status(404).json({ error: 'Farmer not found' });
+        }
+        res.json(updatedFarmer);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 //get all buyer
 router.get('/buyer', async (req, res) => {
     try {
