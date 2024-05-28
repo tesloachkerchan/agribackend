@@ -15,6 +15,18 @@ router.get('/farmer', async (req, res) => {
     }
 });
 //get single farmer
+router.get('/farmer/:farmerId/admin', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId
+        const farmer = await Farmer.find({ _id: farmerId })
+        res.json(farmer);
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+//get single farmer
 router.get('/farmer/:farmerId', async (req, res) => {
     try {
         const farmerId = req.params.farmerId
