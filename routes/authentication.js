@@ -59,9 +59,9 @@ router.post('/buyer/register', async (req, res) => {
 });
 
 
-router.post('/register', upload.single('license'), async (req, res) => {
+router.post('/register', upload.fields([{ name: 'license', maxCount: 1 }, { name: 'profilePicture', maxCount: 1 }]), async (req, res) => {
   try {
-    const { role, name, email, password, confirmPassword, ...otherFields } = req.body;
+    const { role, name, email, password, confirmPassword, phone, address, ...otherFields } = req.body;
 
     // Check if password matches confirm password
     if (password !== confirmPassword) {
@@ -71,26 +71,27 @@ router.post('/register', upload.single('license'), async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if file was uploaded successfully
-    if (!req.file) {
-      return res.status(400).json({ message: 'No license file uploaded' });
+    // Check if files were uploaded successfully
+    if (!req.files.license || !req.files.profilePicture) {
+      return res.status(400).json({ message: 'Files not uploaded successfully' });
     }
 
-    // Upload license image to imgbb
-        const fileData = fs.readFileSync(req.file.path);
-        const base64Data = fileData.toString('base64');
+    // Upload license and profile picture to imgbb
+    const uploadToImgbb = async (file) => {
+      const fileData = fs.readFileSync(file.path);
+      const base64Data = fileData.toString('base64');
+      const formData = new FormData();
+      formData.append('image', base64Data);
+      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+        params: {
+          key: process.env.IMG_KEY,
+        },
+      });
+      return response.data.data.url;
+    };
 
-        const formData = new FormData();
-        formData.append('image', base64Data);
-        const IMGKEY = process.env.IMG_KEY;
-
-    const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-      params: {
-        key: IMGKEY,
-      },
-    });
-
-    const licenseUrl = response.data.data.url;
+    const licenseUrl = await uploadToImgbb(req.files.license[0]);
+    const profilePictureUrl = await uploadToImgbb(req.files.profilePicture[0]);
 
     let user;
     switch (role) {
@@ -99,16 +100,14 @@ router.post('/register', upload.single('license'), async (req, res) => {
         if (user) {
           return res.status(400).json({ message: 'Farmer already exists' });
         }
-        // Additional checks or validations specific to farmer registration can be added here
-        user = await Farmer.create({ name, email, password: hashedPassword, license: licenseUrl, ...otherFields });
+        user = await Farmer.create({ name, email, password: hashedPassword, license: licenseUrl, photo: profilePictureUrl, contactDetails: { phone, address }, ...otherFields });
         break;
       case 'transportation':
         user = await TransportationCompany.findOne({ email });
         if (user) {
           return res.status(400).json({ message: 'Transportation Company already exists' });
         }
-        // Additional checks or validations specific to transportation company registration can be added here
-        user = await TransportationCompany.create({ name, email, password: hashedPassword,license: licenseUrl, ...otherFields });
+        user = await TransportationCompany.create({ name, email, password: hashedPassword, license: licenseUrl, photo: profilePictureUrl, contactDetails: { phone, address }, ...otherFields });
         break;
       default:
         return res.status(400).json({ message: 'Invalid role' });
@@ -119,9 +118,11 @@ router.post('/register', upload.single('license'), async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   } finally {
-    fs.unlinkSync(req.file.path); // Clean up the uploaded file
+    if (req.files.license) fs.unlinkSync(req.files.license[0].path);
+    if (req.files.profilePicture) fs.unlinkSync(req.files.profilePicture[0].path);
   }
 });
+
 
 
 
