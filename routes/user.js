@@ -91,7 +91,7 @@ router.get('/company/:companyId', async (req, res) => {
     try {
         const companyId = req.params.companyId
         const company = await Company.find({_id:companyId})
-        res.status(200).json({company});
+        res.status(200).json(company);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
