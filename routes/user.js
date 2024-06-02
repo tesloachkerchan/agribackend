@@ -97,6 +97,16 @@ router.get('/company/:companyId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+router.get('/company/profile/:companyId', async (req, res) => {
+    try {
+        const companyId = req.params.companyId
+        const company = await Company.find({_id:companyId})
+        res.status(200).json({company});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Activate or deactivate farmer account
 router.put('/farmer/:farmerId/status', async (req, res) => {
