@@ -10,6 +10,7 @@ const reviewRoute = require('./routes/review')
 const companyRoute = require('./routes/company')
 const userRoute = require('./routes/user')
 const blogRoute = require('./routes/blog')
+const axios = require('axios')
 
  dotenv.config();
  const app = express();
