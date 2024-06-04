@@ -35,27 +35,47 @@ router.post('/admin/register', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-router.post('/buyer/register', async (req, res) => {
-  try {
-    const { role, name, email, password, confirmPassword, ...otherFields } = req.body;
-
-    // Check if password matches confirm password
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match' });
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user = await Buyer.findOne({ email });
-    if (user) {
-          return res.status(400).json({ message: 'Admin already exists' });
-    }
-    user = await Buyer.create({ name, email, password: hashedPassword, ...otherFields });
-    res.status(201).json({ message: 'User created successfully', user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
+router.post('/buyer/register',upload.single('profilePicture'), async (req, res) => { 
+  try { 
+    const { role, name, email, password, confirmPassword,phone,address, ...otherFields } = req.body; 
+ 
+    // Check if password matches confirm password 
+    if (password !== confirmPassword) { 
+      return res.status(400).json({ message: 'Passwords do not match' }); 
+    } 
+ 
+    // Hash the password 
+    const hashedPassword = await bcrypt.hash(password, 10); 
+    // Check if file was uploaded successfully 
+        if (!req.file) { 
+            return res.status(400).json({ message: 'No file uploaded' }); 
+        } 
+ 
+        // Upload image to imgBB 
+        const fileData = fs.readFileSync(req.file.path); 
+        const base64Data = fileData.toString('base64'); 
+ 
+        const formData = new FormData(); 
+        formData.append('image', base64Data); 
+        const IMGKEY = process.env.IMG_KEY; 
+ 
+        const response = await axios.post('https://api.imgbb.com/1/upload', formData, { 
+            params: { 
+                key: IMGKEY, 
+            }, 
+        }); 
+ 
+        const photo = response.data.data.url; 
+    user = await Buyer.findOne({ email }); 
+    if (user) { 
+          return res.status(400).json({ message: 'Admin already exists' }); 
+    } 
+    user = await Buyer.create({ name, email,photo, password: hashedPassword,contactDetails: { phone, address }, ...otherFields }); 
+    res.status(201).json({ message: 'User created successfully', user }); 
+  } catch (error) { 
+    console.error(error); 
+    res.status(500).json({ message: 'Server error' }); 
+  } 
 });
 
 
