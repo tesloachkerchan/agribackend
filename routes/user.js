@@ -75,6 +75,17 @@ router.get('/buyer/:buyerId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+//get single buyer
+router.get('/buyer/profile/:buyerId', async (req, res) => {
+    try {
+        const buyerId = req.params.buyerId
+        const buyer = await Buyer.find({_id:buyerId})
+        res.status(200).json({buyer});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 //get all company
 router.get('/company', async (req, res) => {
     try {
