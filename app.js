@@ -56,7 +56,7 @@ app.post('/accept-payment', async (req, res) => {
       first_name, 
       phone_number, 
       tx_ref, 
-      return_url: 'http://localhost:3001/payment-success', // Update to your actual return URL 
+      return_url: 'http://agribuyer.vercel.app/payment-success', // Update to your actual return URL 
     }; 
  
     const response = await axios.post('https://api.chapa.co/v1/transaction/initialize', body, header); 
