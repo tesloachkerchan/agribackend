@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const multer = require('multer');
+const sendMail = require('./sendMail')
 const fs = require('fs');
 const path = require('path')
 const Product = require('../models/productModel');
@@ -155,8 +156,44 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete Product Route
-// Delete Product Route
+// Delete Product by admin Route
+router.delete('/deleteproduct/admin/:id', async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    // Find the product and populate the owner details
+    const product = await Product.findById(productId).populate('productOwner');
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    // Send email to the owner
+    await sendMail({
+      email: product.owner.email,
+      subject: 'Product Deletion Notification',
+      message: `Hello ${product.productOwner},\n\nYour product "${product.name}" has been deleted by the admin for the following reason:\n\n it does not meet our rule\n\nBest regards,\nYour Company Name`,
+    });
+
+    // Delete the product
+    await product.remove();
+
+    res.status(200).json({
+      success: true,
+      message: 'Product deleted successfully and email sent to the owner',
+    });
+  } catch (error) {
+    console.error('Error deleting product or sending email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while deleting the product or sending the email',
+    });
+  }
+});
+// Delete Product by farmer Route
 router.delete('/:farmerId/:productId', async (req, res) => {
     try {
         const productId = req.params.productId;
