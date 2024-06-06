@@ -159,6 +159,7 @@ router.put('/:id', async (req, res) => {
 // Delete Product by admin Route
 router.delete('/deleteproduct/admin/:id', async (req, res) => {
   const productId = req.params.id;
+  const { reason } = req.body;
 
   try {
     // Find the product and populate the owner details
@@ -177,7 +178,7 @@ router.delete('/deleteproduct/admin/:id', async (req, res) => {
     await sendMail({
       email: farmer.email,
       subject: 'Product Deletion Notification',
-      message: `Hello ${product.productOwner},\n\nYour product "${product.name}" has been deleted by the admin for the following reason:\n\n it does not meet our rule\n\nBest regards,\nYour Company Name`,
+      message: `Hello ${product.productOwner},\n\nYour product "${product.name}" has been deleted by the admin for the following reason:\n\n ${reason}\n\nBest regards,\nYour Company Name`,
     });
 
     // Delete the product
