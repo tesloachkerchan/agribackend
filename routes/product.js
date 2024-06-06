@@ -163,6 +163,8 @@ router.delete('/deleteproduct/admin/:id', async (req, res) => {
   try {
     // Find the product and populate the owner details
     const product = await Product.findById(productId).populate('productOwner');
+    const farmerId = product.farmerId;
+    const farmer = await Farmer.findById(farmerId)
 
     if (!product) {
       return res.status(404).json({
@@ -173,7 +175,7 @@ router.delete('/deleteproduct/admin/:id', async (req, res) => {
 
     // Send email to the owner
     await sendMail({
-      email: product.owner.email,
+      email: farmer.email,
       subject: 'Product Deletion Notification',
       message: `Hello ${product.productOwner},\n\nYour product "${product.name}" has been deleted by the admin for the following reason:\n\n it does not meet our rule\n\nBest regards,\nYour Company Name`,
     });
