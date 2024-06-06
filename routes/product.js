@@ -181,7 +181,7 @@ router.delete('/deleteproduct/admin/:id', async (req, res) => {
     });
 
     // Delete the product
-    await product.delete();
+    await Product.findByIdAndDelete(productId);
 
     res.status(200).json({
       success: true,
