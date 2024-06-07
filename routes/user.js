@@ -3,6 +3,7 @@ const router = express.Router();
 const Farmer = require('../models/farmerModel')
 const Buyer =require('../models/buyerModel')
 const Company = require('../models/transportationModel')
+const bcrypt = require('bcrypt');
 //get all farmer
 router.get('/farmer', async (req, res) => {
     try {
@@ -38,6 +39,17 @@ router.get('/farmer/:farmerId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+router.get('/farmer/setting/:farmerId', async (req, res) => {
+    try {
+        const farmerId = req.params.farmerId
+        const farmer = await Farmer.find({ _id: farmerId })
+        res.json(farmer);
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // Update farmer
 router.put('/farmer/:farmerId', async (req, res) => {
     try {
@@ -50,6 +62,36 @@ router.put('/farmer/:farmerId', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+// Update farmer information
+router.put('/update/farmer/setting/:farmerId', async (req, res) => {
+    const id = req.params.farmerId;
+    const { name, email, password } = req.body;
+
+    try {
+        // Find the farmer by ID
+        let farmer = await Farmer.findById(id);
+
+        if (!farmer) {
+            return res.status(404).json({ message: "Farmer not found" });
+        }
+
+        // Update fields
+        if (name) farmer.name = name;
+        if (email) farmer.email = email;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            farmer.password = await bcrypt.hash(password, salt);
+        }
+
+        // Save updated farmer
+        await farmer.save();
+
+        res.json({ message: "Farmer information updated successfully", farmer });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
     }
 });
 
